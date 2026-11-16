@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>毅洲機械壘球隊</title>
+  <style>
+    :root {
+      --primary: #1b4332;
+      --primary-light: #2d6a4f;
+      --accent: #d97706;
+      --bg: #f3f4f6;
+      --card: #ffffff;
+      --text: #1f2937;
+      --border: #e5e7eb;
+      --danger: #dc2626;
+      --success: #16a34a;
+    }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    body { margin: 0; padding: 0; background: var(--bg); color: var(--text); padding-bottom: 80px; }
+    header { background: var(--primary); color: white; padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+    .container { max-width: 900px; margin: 0 auto; padding: 12px; }
+    
+    .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid var(--border); box-shadow: 0 -2px 5px rgba(0,0,0,0.05); z-index: 100; }
+    .nav-item { flex: 1; padding: 12px 5px; text-align: center; font-size: 0.9rem; color: #6b7280; cursor: pointer; border: none; background: none; font-weight: bold; }
+    .nav-item.active { color: var(--primary); border-top: 3px solid var(--primary); background: #f0fdf4; }
+    
+    .card { background: var(--card); border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .card-title { font-size: 1.05rem; font-weight: bold; margin-bottom: 12px; color: var(--primary); border-bottom: 2px solid #f0fdf4; padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+    .form-group { margin-bottom: 10px; }
+    label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 4px; color: #4b5563; }
+    input, select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; background: white; }
+    .row { display: flex; gap: 10px; }
+    .col { flex: 1; }
+    
+    .btn { display: inline-block; width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; text-align: center; transition: opacity 0.2s; }
+    .btn:active { opacity: 0.8; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-accent { background: var(--accent); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-outline { background: white; border: 1px solid var(--primary); color: var(--primary); }
+    .btn-sm { padding: 6px 10px; font-size: 0.85rem; width: auto; }
+
+    .scoreboard { background: #111827; color: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
+    .score-top { display: flex; justify-content: space-between; align-items: center; text-align: center; }
+    .team-score { flex: 1; }
+    .team-name { font-size: 0.9rem; color: #9ca3af; }
+    .score-num { font-size: 2.2rem; font-weight: bold; color: #fbbf24; }
+    .inning-info { flex: 1; border-left: 1px solid #374151; border-right: 1px solid #374151; }
+    .outs-dots { display: flex; justify-content: center; gap: 6px; margin-top: 6px; }
+    .dot { width: 14px; height: 14px; border-radius: 50%; background: #374151; }
+    .dot.active { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+
+    .diamond-box { position: relative; width: 140px; height: 140px; margin: 15px auto 5px; }
+    .base { position: absolute; width: 32px; height: 32px; background: #374151; border: 2px solid #9ca3af; transform: rotate(45deg); cursor: pointer; transition: 0.2s; }
+    .base.occupied { background: #fbbf24; border-color: #f59e0b; box-shadow: 0 0 10px #fbbf24; }
+    .base-2 { top: 10px; left: 54px; }
+    .base-3 { top: 54px; left: 10px; }
+    .base-1 { top: 54px; right: 10px; }
+    .base-home { bottom: 10px; left: 54px; background: white; border-color: white; cursor: default; }
+    .base-hint { text-align: center; font-size: 0.75rem; color: #9ca3af; margin-bottom: 5px; }
+
+    /* 打擊按鈕網格 (4x3共11個按鈕) */
+    .action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+    @media (min-width: 600px) {
+      .action-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    .act-btn { padding: 14px 4px; border: none; border-radius: 8px; font-weight: bold; font-size: 0.92rem; cursor: pointer; color: white; }
+    .act-hit { background: #16a34a; }
+    .act-hr { background: #d97706; }
+    .act-walk { background: #2563eb; }
+    .act-out { background: #4b5563; }
+    .act-fc { background: #0d9488; }
+    .act-k { background: #dc2626; }
+    .act-err { background: #7c3aed; }
+
+    /* 守備佈陣網格 */
+    .defense-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    @media (min-width: 600px) {
+      .defense-grid { grid-template-columns: repeat(5, 1fr); }
+    }
+    .def-slot { background: #f9fafb; padding: 8px; border-radius: 6px; border: 1px solid var(--border); }
+    .def-slot label { font-size: 0.8rem; color: var(--primary); margin-bottom: 3px; }
+    .def-slot select { padding: 6px; font-size: 0.9rem; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: center; }
+    th, td { padding: 8px 6px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    th { background: #f9fafb; color: #374151; font-weight: bold; }
+    td:first-child, th:first-child { text-align: left; position: sticky; left: 0; background: inherit; font-weight: bold; }
+    tr:nth-child(even) { background: #f9fafb; }
+    tr:nth-child(odd) { background: #ffffff; }
+
+    .section { display: none; }
+    .section.active { display: block; }
+    .log-item { font-size: 0.85rem; padding: 6px 0; border-bottom: 1px dashed var(--border); display: flex; justify-content: space-between; }
+    .badge { padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; color: white; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<header id="app-title">⚾ 毅洲機械壘球隊</header>
+
+<div class="container">
+  <!-- 1. 比賽記分頁面 -->
+  <div id="sec-game" class="section active">
+    <div id="new-game-panel" class="card">
+      <div class="card-title">開始新比賽</div>
+      <div class="row">
+        <div class="col form-group">
+          <label>比賽日期</label>
+          <input type="date" id="game-date">
+        </div>
+        <div class="col form-group">
+          <label>對手名稱</label>
+          <input type="text" id="game-opponent" placeholder="例：閃電隊">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>我方先攻 / 後攻</label>
+        <select id="game-side">
+          <option value="top">先攻 (上半局進攻)</option>
+          <option value="bottom">後攻 (下半局進攻)</option>
+        </select>
+      </div>
+      <div class="card" style="background:#f8fafc;border:1px solid #e5e7eb;">
+        <div class="card-title">本場先發名單與打序</div>
+        <p style="font-size:.85rem;color:#6b7280">從全隊名單選擇本場出賽球員、守備位置與打序。未選球員保留為替補，可供代打、代跑使用。</p>
+        <div class="row" style="margin-bottom:8px"><button type="button" class="btn btn-sm btn-outline" onclick="selectAllStarters(true)">全選</button><button type="button" class="btn btn-sm btn-outline" onclick="selectAllStarters(false)">清空</button></div>
+        <div class="table-wrap"><table><thead><tr><th>出賽</th><th>球員</th><th>打序</th><th>守位</th></tr></thead><tbody id="pregame-lineup"></tbody></table></div>
+      </div>
+      <button type="button" class="btn btn-primary" onclick="startNewGame()">確認先發名單並開始比賽</button>
+    </div>
+
+    <div id="active-game-panel" style="display:none;">
+      <div class="scoreboard">
+        <div class="score-top">
+          <div class="team-score">
+            <div class="team-name" id="sb-away-name">我方</div>
+            <div class="score-num" id="sb-away-score">0</div>
+          </div>
+          <div class="inning-info">
+            <div style="font-size: 1.1rem; font-weight: bold; color: #34d399;" id="sb-inning">1局上</div>
+            <div class="outs-dots">
+              <div class="dot" id="out-1"></div>
+              <div class="dot" id="out-2"></div>
+              <div class="dot" id="out-3"></div>
+            </div>
+            <div style="font-size: 0.75rem; color: #9ca3af; margin-top: 4px;">出局數 (OUT)</div>
+          </div>
+          <div class="team-score">
+            <div class="team-name" id="sb-home-name">對手</div>
+            <div class="score-num" id="sb-home-score">0</div>
+          </div>
+        </div>
+
+        <div class="diamond-box">
+          <div class="base base-2" id="base-2" onclick="toggleBase(2)" title="二壘"></div>
+          <div class="base base-3" id="base-3" onclick="toggleBase(3)" title="三壘"></div>
+          <div class="base base-1" id="base-1" onclick="toggleBase(1)" title="一壘"></div>
+          <div class="base base-home"></div>
+        </div>
+        <div class="base-hint">💡 點擊壘包可手動調整跑者狀態</div>
+
+        <div class="row" style="margin-top: 10px;">
+          <button type="button" class="btn btn-sm btn-outline" style="color:white; border-color:#4b5563; background:transparent; flex:1;" onclick="addRun(true)">我方 +1分</button>
+          <button type="button" class="btn btn-sm btn-outline" style="color:white; border-color:#4b5563; background:transparent; flex:1;" onclick="addRun(false)">對手 +1分</button>
+          <button type="button" class="btn btn-sm btn-accent" style="flex:1;" onclick="nextHalfInning()">換局 ➔</button>
+        </div>
+      </div>
+
+      <!-- 打擊記錄區 -->
+      <div class="card">
+        <div class="card-title">
+          <span>打席記錄</span>
+          <button type="button" class="btn btn-sm btn-outline" onclick="undoLastPlay()">↩ 復原上一球</button>
+        </div>
+        <div class="row">
+          <div class="col form-group">
+            <label>目前打者</label>
+            <select id="current-batter"></select>
+          </div>
+          <div class="col form-group" style="max-width: 115px;">
+            <label>本打席打點</label>
+            <select id="current-rbi">
+              <option value="0">0 打點</option>
+              <option value="1">1 打點</option>
+              <option value="2">2 打點</option>
+              <option value="3">3 打點</option>
+              <option value="4">4 打點</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="action-grid">
+          <button type="button" class="act-btn act-hit" onclick="recordAtBat('1B')">一壘安打</button>
+          <button type="button" class="act-btn act-hit" onclick="recordAtBat('2B')">二壘安打</button>
+          <button type="button" class="act-btn act-hit" onclick="recordAtBat('3B')">三壘安打</button>
+          <button type="button" class="act-btn act-hr" onclick="recordAtBat('HR')">全壘打</button>
+          <button type="button" class="act-btn act-walk" onclick="recordAtBat('BB')">四壞保送</button>
+          <button type="button" class="act-btn act-walk" onclick="recordAtBat('SF')">高飛犧牲</button>
+          <button type="button" class="act-btn act-out" onclick="recordAtBat('FO')">飛球出局</button>
+          <button type="button" class="act-btn act-out" onclick="recordAtBat('GO')">滾地球封殺</button>
+          <button type="button" class="act-btn act-fc" onclick="recordAtBat('FC')">野選上壘</button>
+          <button type="button" class="act-btn act-k" onclick="recordAtBat('SO')">三振 (K)</button>
+          <button type="button" class="act-btn act-err" onclick="recordAtBat('E')">失誤上壘</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🔄 球員替換（代打 / 代跑）</div>
+        <div class="row"><div class="col form-group"><label>換人類型</label><select id="sub-type" onchange="renderSubstitutionControls()"><option value="PH">代打 PH</option><option value="PR">代跑 PR</option></select></div><div class="col form-group"><label id="sub-target-label">原打者</label><select id="sub-target"></select></div></div>
+        <div class="form-group"><label>替補球員</label><select id="sub-player"></select></div>
+        <button type="button" class="btn btn-accent" onclick="makeSubstitution()">確認換人</button>
+        <div id="substitution-list" style="margin-top:10px;font-size:.85rem;"></div>
+        <div style="font-size:.78rem;color:#6b7280;margin-top:8px;">代打替換該打序位置；代跑替換指定壘包跑者。請依賽事規章確認球員再上場資格。</div>
+      </div>
+
+      <!-- 本場守備位置與失誤紀錄 -->
+      <div class="card">
+        <div class="card-title">
+          <span>🛡️ 本場守備位置紀錄 (10人制)</span>
+          <button type="button" class="btn btn-sm btn-outline" onclick="autoFillDefense()">依預設位置帶入</button>
+        </div>
+        <div class="defense-grid" id="defense-lineup-grid"></div>
+        
+        <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border);">
+          <label>登錄我方守備失誤 (Error)</label>
+          <div class="row">
+            <div class="col">
+              <select id="error-pos-select">
+                <option value="P">投手 (P)</option>
+                <option value="C">捕手 (C)</option>
+                <option value="1B">一壘手 (1B)</option>
+                <option value="2B">二壘手 (2B)</option>
+                <option value="3B">三壘手 (3B)</option>
+                <option value="SS">游擊手 (SS)</option>
+                <option value="LF">左外野 (LF)</option>
+                <option value="CF">中外野 (CF)</option>
+                <option value="RF">右外野 (RF)</option>
+                <option value="SF">自由手 (SF)</option>
+              </select>
+            </div>
+            <button type="button" class="btn btn-sm btn-danger" onclick="recordDefenseError()">＋ 記一次失誤</button>
+          </div>
+          <div id="defense-error-list" style="margin-top: 8px; font-size: 0.85rem; color: #dc2626;"></div>
+        </div>
+      </div>
+
+      <!-- 投手快捷記錄區 -->
+      <div class="card">
+        <div class="card-title">本場投手數據結算</div>
+        <div class="row">
+          <div class="col form-group">
+            <label>投手</label>
+            <select id="current-pitcher"></select>
+          </div>
+          <div class="col form-group">
+            <label>投球局數 (例: 2.1)</label>
+            <input type="number" step="0.1" id="pitch-ip" placeholder="0.0">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col form-group">
+            <label>失分 (R)</label>
+            <input type="number" id="pitch-r" value="0">
+          </div>
+          <div class="col form-group">
+            <label>自責分 (ER)</label>
+            <input type="number" id="pitch-er" value="0">
+          </div>
+          <div class="col form-group">
+            <label>三振 (SO)</label>
+            <input type="number" id="pitch-so" value="0">
+          </div>
+        </div>
+        <button type="button" class="btn btn-outline" onclick="savePitchingRecord()">＋ 儲存此投手紀錄</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">本場逐打席紀錄</div>
+        <div id="game-logs" style="max-height: 220px; overflow-y: auto;"></div>
+      </div>
+
+      <button type="button" class="btn btn-primary" style="margin-bottom: 20px;" onclick="finishGame()">✅ 結束並儲存本場比賽</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">歷史戰績紀錄</div>
+      <div id="history-list" style="font-size: 0.9rem; color: #6b7280;">尚無比賽紀錄</div>
+    </div>
+  </div>
+
+  <!-- 2. 數據統計頁面 -->
+  <div id="sec-stats" class="section">
+    <div class="card"><div class="card-title">選擇單場比賽</div><select id="stats-game-select" onchange="renderStats()"></select><p id="stats-game-hint" style="font-size:.85rem;color:#6b7280;margin-bottom:0"></p></div>
+    <div class="card">
+      <div class="card-title">打擊數據排行榜</div>
+      <div class="table-wrap">
+        <table id="batting-table">
+          <thead>
+            <tr>
+              <th>球員</th><th>打席</th><th>打數</th><th>安打</th><th>二安</th><th>三安</th><th>全壘打</th><th>打點</th><th>保送</th><th>三振</th><th>滾地</th><th>飛球</th><th>野選</th><th>打擊率</th><th>上壘率</th><th>長打率</th><th>OPS</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🛡️ 守備出賽與失誤排行榜</div>
+      <div class="table-wrap">
+        <table id="defense-table">
+          <thead>
+            <tr>
+              <th>球員</th><th>總出賽場次</th><th>主要位置</th><th>各位置出賽明細</th><th>守備失誤 (E)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">投手數據排行榜 (7局制)</div>
+      <div class="table-wrap">
+        <table id="pitching-table">
+          <thead>
+            <tr>
+              <th>投手</th><th>出賽</th><th>局數</th><th>失分</th><th>自責分</th><th>三振</th><th>防禦率(ERA)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 整季球員成績 -->
+  <div id="sec-season" class="section">
+    <div class="card"><div class="card-title">整季成績查詢</div><div class="row"><div class="col"><label>球季年份</label><select id="season-year" onchange="renderStats()"></select></div><div class="col"><label>球員</label><select id="season-player" onchange="renderStats()"></select></div></div><p style="font-size:.8rem;color:#6b7280">依比賽日期年份累計已完成場次，可選擇全部球員或單一球員。</p></div>
+    <div class="card">
+      <div class="card-title">打擊數據排行榜</div>
+      <div class="table-wrap">
+        <table id="season-batting-table">
+          <thead>
+            <tr>
+              <th>球員</th><th>打席</th><th>打數</th><th>安打</th><th>二安</th><th>三安</th><th>全壘打</th><th>打點</th><th>保送</th><th>三振</th><th>滾地</th><th>飛球</th><th>野選</th><th>打擊率</th><th>上壘率</th><th>長打率</th><th>OPS</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🛡️ 守備出賽與失誤排行榜</div>
+      <div class="table-wrap">
+        <table id="season-defense-table">
+          <thead>
+            <tr>
+              <th>球員</th><th>總出賽場次</th><th>主要位置</th><th>各位置出賽明細</th><th>守備失誤 (E)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">投手數據排行榜 (7局制)</div>
+      <div class="table-wrap">
+        <table id="season-pitching-table">
+          <thead>
+            <tr>
+              <th>投手</th><th>出賽</th><th>局數</th><th>失分</th><th>自責分</th><th>三振</th><th>防禦率(ERA)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 球員名單管理 -->
+  <div id="sec-players" class="section">
+    <div class="card">
+      <div class="card-title">新增全隊球員</div>
+      <div class="row">
+        <div class="col form-group" style="max-width: 90px;">
+          <label>背號</label>
+          <input type="text" id="p-num" placeholder="10">
+        </div>
+        <div class="col form-group">
+          <label>球員姓名</label>
+          <input type="text" id="p-name" placeholder="輸入姓名">
+        </div>
+        <div class="col form-group" style="max-width: 115px;">
+          <label>主要守備</label>
+          <select id="p-pos">
+            <option value="P">投手(P)</option>
+            <option value="C">捕手(C)</option>
+            <option value="1B">一壘(1B)</option>
+            <option value="2B">二壘(2B)</option>
+            <option value="3B">三壘(3B)</option>
+            <option value="SS">游擊(SS)</option>
+            <option value="LF">左外(LF)</option>
+            <option value="CF">中外(CF)</option>
+            <option value="RF">右外(RF)</option>
+            <option value="SF">自由(SF)</option>
+            <option value="DH">指定(DH)</option>
+          </select>
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary" onclick="addPlayer()">＋ 新增球員</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">全隊名單 (<span id="player-count">0</span>人)</div><p style="font-size:.85rem;color:#6b7280">此處管理全隊球員；每場先發打序與守位請在「開始新比賽」設定。</p>
+      <div id="player-list"></div>
+    </div>
+  </div>
+
+  <!-- 4. 設定與備份 -->
+  <div id="sec-settings" class="section">
+    <div class="card">
+      <div class="card-title">球隊基本設定</div>
+      <div class="form-group">
+        <label>球隊名稱</label>
+        <input type="text" id="team-name-input">
+      </div>
+      <button type="button" class="btn btn-primary" onclick="saveTeamName()">儲存隊名</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">單機資料備份與還原</div>
+      <p style="font-size: 0.85rem; color: #4b5563; line-height: 1.5; margin-top: 0;">
+        所有資料皆儲存在此裝置的瀏覽器中。建議每次比賽後匯出備份檔保存，或透過 LINE / AirDrop 傳送給隊友及 iPad 匯入查看。
+      </p>
+      <button type="button" class="btn btn-accent" style="margin-bottom: 12px;" onclick="exportData()">📥 匯出資料備份檔 (.json)</button>
+      <div class="form-group">
+        <label>📤 匯入備份檔還原</label>
+        <input type="file" accept=".json" onchange="importData(event)">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="color: var(--danger);">危險區域</div>
+      <button type="button" class="btn btn-danger" onclick="resetAllData()">⚠️ 清空所有紀錄與球員資料</button>
+    </div>
+  </div>
+</div>
+
+<div class="nav-bar">
+  <button type="button" class="nav-item active" onclick="switchTab('game', this)">⚾ 比賽記分</button>
+  <button type="button" class="nav-item" onclick="switchTab('stats', this)">📊 數據統計</button>
+  <button type="button" class="nav-item" onclick="switchTab('season', this)">📅 整季成績</button>
+  <button type="button" class="nav-item" onclick="switchTab('players', this)">👥 球員名單</button>
+  <button type="button" class="nav-item" onclick="switchTab('settings', this)">⚙️ 備份設定</button>
+</div>
+
+<script>
+const POSITIONS = ['P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'SF'];
+const POS_NAMES = {
+  'P': '投手 (P)', 'C': '捕手 (C)', '1B': '一壘 (1B)', '2B': '二壘 (2B)', '3B': '三壘 (3B)',
+  'SS': '游擊 (SS)', 'LF': '左外 (LF)', 'CF': '中外 (CF)', 'RF': '右外 (RF)', 'SF': '自由 (SF)'
+};
+
+let appData = {
+  teamName: "毅洲機械壘球隊",
+  players: [],
+  games: [],
+  activeGame: null
+};
+
+window.onload = function() {
+  try {
+    const saved = localStorage.getItem('softball_club_data_v1');
+    if (saved) {
+      appData = JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  const dateEl = document.getElementById('game-date');
+  if (dateEl) dateEl.valueAsDate = new Date();
+  document.getElementById('team-name-input').value = appData.teamName;
+  document.getElementById('app-title').innerText = '⚾ ' + appData.teamName;
+  renderAll();
+};
+
+function saveData() {
+  localStorage.setItem('softball_club_data_v1', JSON.stringify(appData));
+}
+
+function switchTab(tab, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('sec-' + tab).classList.add('active');
+  el.classList.add('active');
+  renderAll();
+}
+
+function renderAll() {
+  renderPlayers();
+  renderPregameLineup();
+  renderGamePanel();
+  renderHistory();
+  renderStats();
+}
+
+function addPlayer() {
+  const num = document.getElementById('p-num').value.trim() || '00';
+  const name = document.getElementById('p-name').value.trim();
+  const pos = document.getElementById('p-pos').value;
+  if (!name) return alert('請輸入球員姓名！');
+  appData.players.push({ id: 'p_' + Date.now(), num: num, name: name, pos: pos });
+  document.getElementById('p-num').value = '';
+  document.getElementById('p-name').value = '';
+  saveData();
+  renderPlayers();
+  renderPregameLineup();
+}
+
+function deletePlayer(id) {
+  if (!confirm('確定要刪除此球員嗎？（歷史數據仍會保留）')) return;
+  appData.players = appData.players.filter(p => p.id !== id);
+  saveData();
+  renderPlayers();
+  renderPregameLineup();
+}
+
+function renderPlayers() {
+  document.getElementById('player-count').innerText = appData.players.length;
+  const list = document.getElementById('player-list');
+  if (appData.players.length === 0) {
+    list.innerHTML = '<div style="color:#9ca3af; font-size:0.9rem;">目前尚無球員，請在上方輸入新增！</div>';
+  } else {
+    list.innerHTML = appData.players.map(p => `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #eee;">
+        <div>
+          <span class="badge" style="background:var(--primary);">#${p.num}</span>
+          <strong style="margin-left:6px;">${p.name}</strong>
+          <span style="color:#6b7280; font-size:0.85rem; margin-left:6px;">(${p.pos})</span>
+        </div>
+        <button type="button" class="btn btn-sm btn-danger" onclick="deletePlayer('${p.id}')">刪除</button>
+      </div>
+    `).join('');
+  }
+
+  const opts = appData.players.map(p => `<option value="${p.id}">#${p.num} ${p.name}</option>`).join('');
+  // 打者選單由比賽打序管理，避免重繪時覆蓋代打換人
+  if (!appData.activeGame) document.getElementById('current-batter').innerHTML = opts;
+  document.getElementById('current-pitcher').innerHTML = opts;
+}
+
+function syncBattingOrder() {
+  const g = appData.activeGame;
+  if (!g) return;
+  if (!g.battingOrder) g.battingOrder = appData.players.map(p=>p.id);
+  if (!g.baseRunners) g.baseRunners = [null,null,null];
+  if (!g.substitutions) g.substitutions = [];
+  const sel = document.getElementById('current-batter');
+  const previous = sel.value;
+  sel.innerHTML = g.battingOrder.map(id => {
+    const p = appData.players.find(x=>x.id===id);
+    return p ? `<option value="${p.id}">#${p.num} ${p.name}</option>` : '';
+  }).join('');
+  if (g.battingOrder.includes(previous)) sel.value = previous;
+}
+function renderSubstitutionControls() {
+  const g = appData.activeGame;
+  if (!g) return;
+  const type = document.getElementById('sub-type').value;
+  const target = document.getElementById('sub-target');
+  const prior = target.value;
+  document.getElementById('sub-target-label').textContent = type === 'PH' ? '原打者（打序）' : '代跑壘包';
+  if (type === 'PH') {
+    target.innerHTML = g.battingOrder.map(id=>{
+      const p=appData.players.find(x=>x.id===id);
+      return p ? `<option value="${id}">#${p.num} ${p.name}</option>` : '';
+    }).join('');
+    if (g.battingOrder.includes(prior)) target.value=prior;
+    else target.value=document.getElementById('current-batter').value;
+  } else {
+    target.innerHTML = [1,2,3].filter(n=>g.bases[n-1]).map(n=>{
+      const p=appData.players.find(x=>x.id===g.baseRunners[n-1]);
+      return `<option value="${n}">${n}壘：${p ? p.name : '跑者未指定'}</option>`;
+    }).join('');
+    if ([...target.options].some(o=>o.value===prior)) target.value=prior;
+  }
+  const sub = document.getElementById('sub-player');
+  const priorSub = sub.value;
+  sub.innerHTML = appData.players.map(p=>`<option value="${p.id}">#${p.num} ${p.name}</option>`).join('');
+  if (appData.players.some(p=>p.id===priorSub)) sub.value=priorSub;
+  document.getElementById('substitution-list').innerHTML = g.substitutions.length ?
+    '<strong>本場換人紀錄</strong>' + g.substitutions.map(x=>`<div style="padding:5px 0;border-bottom:1px solid #eee;">${x.inning}局${x.isTop?'上':'下'} · ${x.type} · ${x.fromName} → ${x.toName}${x.base ? `（${x.base}壘）` : ''}</div>`).join('') : '尚無換人紀錄';
+}
+function makeSubstitution() {
+  const g = appData.activeGame;
+  if (!g) return;
+  const type = document.getElementById('sub-type').value;
+  const target = document.getElementById('sub-target').value;
+  const newId = document.getElementById('sub-player').value;
+  const replacement = appData.players.find(p=>p.id===newId);
+  if (!replacement || !target) return alert('請選擇換人對象及替補球員');
+  let oldId, base=null;
+  if (type==='PH') {
+    oldId=target;
+    if (oldId===newId) return alert('替補球員不可與原打者相同');
+    if (g.battingOrder.includes(newId)) return alert('替補球員已在目前打序中');
+    g.battingOrder[g.battingOrder.indexOf(oldId)] = newId;
+    const sel=document.getElementById('current-batter');
+    if (sel.value===oldId) {
+      const option=[...sel.options].find(o=>o.value===oldId);
+      if (option) {option.value=newId;option.textContent='#'+replacement.num+' '+replacement.name;}
+      sel.value=newId;
+    }
+  } else {
+    base=Number(target);
+    if (!g.bases[base-1]) return alert('該壘目前沒有跑者');
+    oldId=g.baseRunners[base-1];
+    if (!oldId) return alert('請先記錄該壘原跑者的打席，才能進行代跑');
+    if (oldId===newId) return alert('替補球員不可與原跑者相同');
+    if (g.baseRunners.includes(newId)) return alert('替補球員已在壘上');
+    g.baseRunners[base-1]=newId;
+  }
+  const old=appData.players.find(p=>p.id===oldId);
+  g.substitutions.push({type, inning:g.inning,isTop:g.isTop,fromId:oldId,fromName:old?.name||'未知',toId:newId,toName:replacement.name,base});
+  saveData();renderGamePanel();
+}
+
+
+let pregameSignature = '';
+function renderPregameLineup() {
+  const tbody = document.getElementById('pregame-lineup');
+  if (!tbody) return;
+  const signature = appData.players.map(p=>p.id+':'+p.name+':'+p.pos).join('|');
+  if (signature === pregameSignature && tbody.children.length) return;
+  pregameSignature = signature;
+  tbody.innerHTML = appData.players.map((p,i)=>`<tr>
+    <td><input type="checkbox" class="starter-check" data-id="${p.id}" checked style="width:20px;height:20px"></td>
+    <td>#${p.num} ${p.name}</td>
+    <td><input type="number" class="starter-order" min="1" max="99" value="${i+1}" style="width:68px"></td>
+    <td><select class="starter-pos"><option value="">不守備 / DH</option>${POSITIONS.map(pos=>`<option value="${pos}" ${p.pos===pos?'selected':''}>${pos}</option>`).join('')}</select></td>
+  </tr>`).join('');
+}
+function selectAllStarters(checked) {
+  document.querySelectorAll('.starter-check').forEach(el=>el.checked=checked);
+}
+
+function startNewGame() {
+  if (appData.players.length === 0) return alert('請先至「球員名單」新增至少一位球員！');
+  const entries = [...document.querySelectorAll('#pregame-lineup tr')].map(row=>({
+    id: row.querySelector('.starter-check').dataset.id,
+    selected: row.querySelector('.starter-check').checked,
+    order: Number(row.querySelector('.starter-order').value),
+    pos: row.querySelector('.starter-pos').value
+  })).filter(x=>x.selected);
+  if (!entries.length) return alert('請至少選擇一名本場先發球員！');
+  if (entries.some(x=>!Number.isInteger(x.order)||x.order<1)) return alert('打序必須是正整數');
+  if (new Set(entries.map(x=>x.order)).size !== entries.length) return alert('先發球員打序不能重複！');
+  const positions = entries.map(x=>x.pos).filter(Boolean);
+  if (new Set(positions).size !== positions.length) return alert('同一守備位置不能指派兩名先發球員！');
+  entries.sort((a,b)=>a.order-b.order);
+  const date = document.getElementById('game-date').value;
+  const opponent = document.getElementById('game-opponent').value.trim() || '客隊';
+  const side = document.getElementById('game-side').value;
+
+  appData.activeGame = {
+    id: 'g_' + Date.now(),
+    date: date,
+    opponent: opponent,
+    side: side,
+    inning: 1,
+    isTop: true,
+    outs: 0,
+    bases: [false, false, false],
+    myScore: 0,
+    oppScore: 0,
+    logs: [],
+    pitching: [],
+    defense: Object.fromEntries(entries.filter(x=>x.pos).map(x=>[x.pos,x.id])),
+    errors: [],
+    substitutions: [],
+    battingOrder: entries.map(x=>x.id),
+    baseRunners: [null,null,null]
+  };
+  saveData();
+  renderGamePanel();
+}
+
+function renderGamePanel() {
+  const g = appData.activeGame;
+  if (!g) {
+    document.getElementById('new-game-panel').style.display = 'block';
+    document.getElementById('active-game-panel').style.display = 'none';
+    return;
+  }
+  document.getElementById('new-game-panel').style.display = 'none';
+  document.getElementById('active-game-panel').style.display = 'block';
+  syncBattingOrder();
+  renderSubstitutionControls();
+
+  if (!g.defense) g.defense = {};
+  if (!g.errors) g.errors = [];
+
+  document.getElementById('sb-away-name').innerText = g.side === 'top' ? appData.teamName : g.opponent;
+  document.getElementById('sb-home-name').innerText = g.side === 'top' ? g.opponent : appData.teamName;
+  document.getElementById('sb-away-score').innerText = g.side === 'top' ? g.myScore : g.oppScore;
+  document.getElementById('sb-home-score').innerText = g.side === 'top' ? g.oppScore : g.myScore;
+  document.getElementById('sb-inning').innerText = g.inning + '局' + (g.isTop ? '上' : '下');
+
+  for (let i = 1; i <= 3; i++) {
+    document.getElementById('out-' + i).classList.toggle('active', i <= g.outs);
+  }
+  for (let b = 1; b <= 3; b++) {
+    document.getElementById('base-' + b).classList.toggle('occupied', g.bases[b - 1]);
+  }
+
+  renderDefenseGrid();
+
+  const logsEl = document.getElementById('game-logs');
+  if (g.logs.length === 0) {
+    logsEl.innerHTML = '<div style="color:#9ca3af; font-size:0.85rem;">尚無打席紀錄</div>';
+  } else {
+    logsEl.innerHTML = g.logs.slice().reverse().map(l => {
+      const rbiText = l.rbi > 0 ? ` (${l.rbi}打點)` : '';
+      return `<div class="log-item"><span><strong>[${l.inning}局${l.isTop ? '上' : '下'}]</strong> ${l.playerName}：${getResultName(l.result)}${rbiText}</span></div>`;
+    }).join('');
+  }
+}
+
+function renderDefenseGrid() {
+  const g = appData.activeGame;
+  if (!g) return;
+  const grid = document.getElementById('defense-lineup-grid');
+  grid.innerHTML = POSITIONS.map(pos => {
+    const selectedId = g.defense[pos] || '';
+    const options = '<option value="">-- 未指派 --</option>' + appData.players.map(p => 
+      `<option value="${p.id}" ${p.id === selectedId ? 'selected' : ''}>#${p.num} ${p.name}</option>`
+    ).join('');
+    return `
+      <div class="def-slot">
+        <label>${POS_NAMES[pos]}</label>
+        <select onchange="updateDefensePos('${pos}', this.value)">${options}</select>
+      </div>
+    `;
+  }).join('');
+
+  const errListEl = document.getElementById('defense-error-list');
+  if (g.errors && g.errors.length > 0) {
+    errListEl.innerHTML = '本場失誤紀錄：' + g.errors.map((e, idx) => 
+      `<span style="display:inline-block; background:#fee2e2; padding:2px 6px; border-radius:4px; margin:2px 4px 2px 0;">
+        ${e.inning}局 ${e.pos}(${e.playerName}) <a href="javascript:void(0)" onclick="removeDefenseError(${idx})" style="color:#991b1b; font-weight:bold; text-decoration:none;">×</a>
+      </span>`
+    ).join('');
+  } else {
+    errListEl.innerHTML = '';
+  }
+}
+
+function updateDefensePos(pos, playerId) {
+  const g = appData.activeGame;
+  g.defense[pos] = playerId;
+  if (pos === 'P' && playerId) {
+    document.getElementById('current-pitcher').value = playerId;
+  }
+  saveData();
+}
+
+function autoFillDefense() {
+  const g = appData.activeGame;
+  const usedIds = new Set();
+  POSITIONS.forEach(pos => {
+    const found = appData.players.find(p => p.pos === pos && !usedIds.has(p.id));
+    if (found) {
+      g.defense[pos] = found.id;
+      usedIds.add(found.id);
+      if (pos === 'P') document.getElementById('current-pitcher').value = found.id;
+    }
+  });
+  saveData();
+  renderDefenseGrid();
+}
+
+function recordDefenseError() {
+  const g = appData.activeGame;
+  const pos = document.getElementById('error-pos-select').value;
+  const playerId = g.defense[pos] || '';
+  const player = appData.players.find(p => p.id === playerId);
+  const playerName = player ? player.name : '未指定球員';
+
+  g.errors.push({
+    inning: g.inning,
+    pos: pos,
+    playerId: playerId,
+    playerName: playerName
+  });
+  saveData();
+  renderDefenseGrid();
+}
+
+function removeDefenseError(idx) {
+  const g = appData.activeGame;
+  g.errors.splice(idx, 1);
+  saveData();
+  renderDefenseGrid();
+}
+
+function toggleBase(b) {
+  const g = appData.activeGame;
+  g.bases[b - 1] = !g.bases[b - 1];
+  if (!g.bases[b - 1]) g.baseRunners[b - 1] = null;
+  saveData();
+  renderGamePanel();
+}
+
+function addRun(isMyTeam) {
+  const g = appData.activeGame;
+  if (isMyTeam) g.myScore++; else g.oppScore++;
+  saveData();
+  renderGamePanel();
+}
+
+function nextHalfInning() {
+  const g = appData.activeGame;
+  g.outs = 0;
+  g.bases = [false, false, false];
+  g.baseRunners = [null,null,null];
+  if (g.isTop) {
+    g.isTop = false;
+  } else {
+    g.isTop = true;
+    g.inning++;
+  }
+  saveData();
+  renderGamePanel();
+}
+
+function recordAtBat(result) {
+  const g = appData.activeGame;
+  const playerId = document.getElementById('current-batter').value;
+  const player = appData.players.find(p => p.id === playerId);
+  if (!player) return alert('請選擇打者！');
+  const rbi = parseInt(document.getElementById('current-rbi').value, 10);
+
+  const prevState = {
+    outs: g.outs,
+    bases: [...g.bases],
+    baseRunners: [...(g.baseRunners || [null,null,null])],
+    myScore: g.myScore,
+    inning: g.inning,
+    isTop: g.isTop
+  };
+
+  const oldRunners = [...(g.baseRunners || [null,null,null])];
+  let runsScored = 0;
+  if (result === 'HR') {
+    runsScored = 1 + g.bases.filter(Boolean).length;
+    g.bases = [false, false, false];
+  } else if (result === '3B') {
+    runsScored = g.bases.filter(Boolean).length;
+    g.bases = [false, false, true];
+  } else if (result === '2B') {
+    if (g.bases[2]) runsScored++;
+    if (g.bases[1]) runsScored++;
+    g.bases = [false, true, g.bases[0]];
+  } else if (result === '1B' || result === 'E') {
+    if (g.bases[2]) runsScored++;
+    g.bases = [true, g.bases[0], g.bases[1]];
+  } else if (result === 'BB') {
+    if (g.bases[0] && g.bases[1] && g.bases[2]) {
+      runsScored++;
+    } else if (g.bases[0] && g.bases[1]) {
+      g.bases[2] = true;
+    } else if (g.bases[0]) {
+      g.bases[1] = true;
+    } else {
+      g.bases[0] = true;
+    }
+  } else if (result === 'FC') {
+    // 野手選擇：打者上一壘，出局數+1（若壘包狀態複雜可再點擊壘包微調）
+    g.outs++;
+    if (g.bases[2] && !g.bases[1] && !g.bases[0]) {
+      g.bases[2] = false;
+      g.bases[0] = true;
+    } else if (g.bases[0] && !g.bases[1]) {
+      g.bases[0] = true;
+    } else {
+      g.bases[0] = true;
+    }
+  } else if (result === 'FO' || result === 'GO' || result === 'OUT' || result === 'SO' || result === 'SF') {
+    g.outs++;
+    if (result === 'SF' && g.bases[2]) {
+      g.bases[2] = false;
+      runsScored++;
+    }
+  }
+
+  // 依原有壘包推進規則同步跑者身分
+  if (result === 'HR') g.baseRunners = [null,null,null];
+  else if (result === '3B') g.baseRunners = [null,null,player.id];
+  else if (result === '2B') g.baseRunners = [null,player.id,oldRunners[0]];
+  else if (result === '1B' || result === 'E') g.baseRunners = [player.id,oldRunners[0],oldRunners[1]];
+  else if (result === 'BB') {
+    const b = [...oldRunners];
+    if (g.bases[0] && !oldRunners[0]) b[0] = player.id;
+    else if (oldRunners[0]) {
+      if (oldRunners[1]) b[2] = oldRunners[1];
+      b[1] = oldRunners[0]; b[0] = player.id;
+    }
+    g.baseRunners = b;
+  } else if (result === 'FC') g.baseRunners[0] = player.id;
+  else if (result === 'SF' && oldRunners[2]) g.baseRunners[2] = null;
+  g.baseRunners = g.baseRunners.map((id,i) => g.bases[i] ? id : null);
+  const actualRuns = Math.max(runsScored, rbi);
+  g.myScore += actualRuns;
+
+  g.logs.push({
+    inning: g.inning,
+    isTop: g.isTop,
+    playerId: player.id,
+    playerName: player.name,
+    result: result,
+    rbi: rbi > 0 ? rbi : runsScored,
+    prevState: prevState
+  });
+
+  if (g.outs >= 3) {
+    alert('3出局！系統已自動重置壘包並進入下一個半局。');
+    nextHalfInning();
+  }
+
+  const select = document.getElementById('current-batter');
+  select.selectedIndex = (select.selectedIndex + 1) % select.options.length;
+  document.getElementById('current-rbi').value = '0';
+
+  saveData();
+  renderGamePanel();
+}
+
+function undoLastPlay() {
+  const g = appData.activeGame;
+  if (g.logs.length === 0) return alert('沒有可復原的紀錄！');
+  const last = g.logs.pop();
+  if (last.prevState) {
+    g.outs = last.prevState.outs;
+    g.bases = last.prevState.bases;
+    if (last.prevState.baseRunners) g.baseRunners = last.prevState.baseRunners;
+    g.myScore = last.prevState.myScore;
+    g.inning = last.prevState.inning;
+    g.isTop = last.prevState.isTop;
+  }
+  saveData();
+  renderGamePanel();
+}
+
+function savePitchingRecord() {
+  const g = appData.activeGame;
+  const playerId = document.getElementById('current-pitcher').value;
+  const player = appData.players.find(p => p.id === playerId);
+  if (!player) return alert('請選擇投手！');
+  const ip = parseFloat(document.getElementById('pitch-ip').value) || 0;
+  const r = parseInt(document.getElementById('pitch-r').value, 10) || 0;
+  const er = parseInt(document.getElementById('pitch-er').value, 10) || 0;
+  const so = parseInt(document.getElementById('pitch-so').value, 10) || 0;
+
+  if (ip <= 0) return alert('請輸入大於 0 的投球局數！');
+  g.pitching.push({ playerId: playerId, playerName: player.name, ip: ip, r: r, er: er, so: so });
+  document.getElementById('pitch-ip').value = '';
+  document.getElementById('pitch-r').value = '0';
+  document.getElementById('pitch-er').value = '0';
+  document.getElementById('pitch-so').value = '0';
+  alert('已暫存投手 ' + player.name + ' (' + ip + '局) 的紀錄！');
+  saveData();
+}
+
+function finishGame() {
+  if (!confirm('確定要結束本場比賽並寫入永久統計嗎？')) return;
+  appData.games.push(appData.activeGame);
+  appData.activeGame = null;
+  saveData();
+  renderAll();
+  alert('比賽已儲存！可至「數據統計」查看最新打擊與守備排行榜。');
+}
+
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  if (appData.games.length === 0) {
+    el.innerHTML = '<div style="color:#9ca3af; font-size:0.85rem;">尚無已完成的比賽紀錄</div>';
+    return;
+  }
+  el.innerHTML = appData.games.slice().reverse().map(g => {
+    const winText = g.myScore > g.oppScore ? '勝' : (g.myScore < g.oppScore ? '敗' : '和');
+    const winColor = g.myScore > g.oppScore ? '#16a34a' : (g.myScore < g.oppScore ? '#dc2626' : '#6b7280');
+    
+    let defSummary = '';
+    if (g.defense) {
+      const lineup = POSITIONS.map(pos => {
+        const pid = g.defense[pos];
+        const p = appData.players.find(pl => pl.id === pid);
+        return p ? `${pos}:${p.name}` : null;
+      }).filter(Boolean);
+      if (lineup.length > 0) {
+        defSummary = `<div style="font-size:0.78rem; color:#6b7280; margin-top:4px;">🛡️ 守備陣容：${lineup.join(' / ')}</div>`;
+      }
+    }
+
+    return `
+      <div style="padding:10px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+        <div>
+          <span class="badge" style="background:${winColor};">${winText}</span> <strong>${g.date}</strong> vs ${g.opponent}
+          <div style="font-size:0.85rem; color:#4b5563; margin-top:2px;">比數：我方 <strong>${g.myScore}</strong> : ${g.oppScore} 對手</div>
+          ${defSummary}
+        </div>
+        <button type="button" class="btn btn-sm btn-danger" onclick="deleteGame('${g.id}')">刪除</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function deleteGame(id) {
+  if (!confirm('確定刪除此場比賽紀錄？球員的累計數據也會同步扣除。')) return;
+  appData.games = appData.games.filter(g => g.id !== id);
+  saveData();
+  renderAll();
+}
+
+function renderStats() {
+  const gameSelect = document.getElementById('stats-game-select');
+  const yearSelect = document.getElementById('season-year');
+  const playerSelect = document.getElementById('season-player');
+  const games = appData.games || [];
+  const active = appData.activeGame;
+  const selectedGame = gameSelect.value;
+  const allGames = active ? [...games, active] : games;
+  gameSelect.innerHTML = allGames.map(g => `<option value="${g.id}">${g === active ? '● 進行中｜' : ''}${g.date || '未註明日期'} vs ${escapeHTML(g.opponent || '對手')}（${g.myScore}:${g.oppScore}）</option>`).join('');
+  if (allGames.some(g => g.id === selectedGame)) gameSelect.value = selectedGame;
+  document.getElementById('stats-game-hint').textContent = allGames.length ? '單場成績可查看進行中的比賽；整季成績僅計入已結束並儲存的比賽。' : '尚無比賽資料，請先建立比賽並記錄打席。';
+  const years = [...new Set(games.map(g => String(g.date || '').slice(0,4)).filter(y => /^\d{4}$/.test(y)))].sort().reverse();
+  const selectedYear = yearSelect.value;
+  yearSelect.innerHTML = years.map(y => `<option value="${y}">${y} 年</option>`).join('');
+  if (years.includes(selectedYear)) yearSelect.value = selectedYear;
+  const selectedPlayer = playerSelect.value;
+  playerSelect.innerHTML = '<option value="">全部球員</option>' + appData.players.map(p => `<option value="${p.id}">#${escapeHTML(p.num)} ${escapeHTML(p.name)}</option>`).join('');
+  if (appData.players.some(p => p.id === selectedPlayer)) playerSelect.value = selectedPlayer;
+  renderStatsTable(allGames.filter(g => g.id === gameSelect.value), '');
+  renderStatsTable(games.filter(g => String(g.date || '').slice(0,4) === yearSelect.value), 'season-', playerSelect.value);
+}
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderStatsTable(selectedGames, prefix, playerFilter = '') {
+  const batStats = {};
+  const pitchStats = {};
+  const defStats = {};
+
+  appData.players.forEach(p => {
+    batStats[p.id] = { name: `#${p.num} ${p.name}`, pa:0, ab:0, h:0, b2:0, b3:0, hr:0, rbi:0, bb:0, so:0, sf:0, go:0, fo:0, fc:0 };
+    pitchStats[p.id] = { name: `#${p.num} ${p.name}`, g:0, outs:0, r:0, er:0, so:0 };
+    defStats[p.id] = { name: `#${p.num} ${p.name}`, mainPos: p.pos, totalGames: 0, posCounts: {}, errors: 0 };
+  });
+
+  selectedGames.forEach(g => {
+    // 打擊累計
+    g.logs.forEach(l => {
+      if (!batStats[l.playerId]) batStats[l.playerId] = { name: l.playerName, pa:0, ab:0, h:0, b2:0, b3:0, hr:0, rbi:0, bb:0, so:0, sf:0, go:0, fo:0, fc:0 };
+      const s = batStats[l.playerId];
+      s.pa++;
+      s.rbi += (l.rbi || 0);
+      if (l.result === 'BB') { s.bb++; }
+      else if (l.result === 'SF') { s.sf++; }
+      else {
+        s.ab++;
+        if (l.result === '1B') { s.h++; }
+        if (l.result === '2B') { s.h++; s.b2++; }
+        if (l.result === '3B') { s.h++; s.b3++; }
+        if (l.result === 'HR') { s.h++; s.hr++; }
+        if (l.result === 'SO') { s.so++; }
+        if (l.result === 'GO') { s.go++; }
+        if (l.result === 'FO') { s.fo++; }
+        if (l.result === 'FC') { s.fc++; }
+      }
+    });
+
+    // 投手累計
+    (g.pitching || []).forEach(pt => {
+      if (!pitchStats[pt.playerId]) pitchStats[pt.playerId] = { name: pt.playerName, g:0, outs:0, r:0, er:0, so:0 };
+      const ps = pitchStats[pt.playerId];
+      ps.g++;
+      const fullInnings = Math.floor(pt.ip);
+      const partialOuts = Math.round((pt.ip - fullInnings) * 10);
+      ps.outs += (fullInnings * 3 + partialOuts);
+      ps.r += pt.r;
+      ps.er += pt.er;
+      ps.so += pt.so;
+    });
+
+    // 守備位置出賽累計
+    if (g.defense) {
+      const playedInThisGame = new Set();
+      POSITIONS.forEach(pos => {
+        const pid = g.defense[pos];
+        if (pid) {
+          if (!defStats[pid]) {
+            const pl = appData.players.find(x => x.id === pid);
+            defStats[pid] = { name: pl ? `#${pl.num} ${pl.name}` : '未知球員', mainPos: pl ? pl.pos : '-', totalGames: 0, posCounts: {}, errors: 0 };
+          }
+          defStats[pid].posCounts[pos] = (defStats[pid].posCounts[pos] || 0) + 1;
+          playedInThisGame.add(pid);
+        }
+      });
+      playedInThisGame.forEach(pid => {
+        defStats[pid].totalGames++;
+      });
+    }
+
+    // 守備失誤累計
+    (g.errors || []).forEach(err => {
+      if (err.playerId) {
+        if (!defStats[err.playerId]) {
+          defStats[err.playerId] = { name: err.playerName, mainPos: '-', totalGames: 0, posCounts: {}, errors: 0 };
+        }
+        defStats[err.playerId].errors++;
+      }
+    });
+  });
+
+  // 渲染打擊表
+  const batTbody = document.querySelector('#' + prefix + 'batting-table tbody');
+  const batRows = Object.entries(batStats).filter(([id, bs]) => bs.pa > 0 && (!playerFilter || id === playerFilter)).map(([, bs]) => bs).map(bs => {
+    const avg = bs.ab > 0 ? (bs.h / bs.ab) : 0;
+    const obpDenom = bs.ab + bs.bb + bs.sf;
+    const obp = obpDenom > 0 ? ((bs.h + bs.bb) / obpDenom) : 0;
+    const b1 = bs.h - bs.b2 - bs.b3 - bs.hr;
+    const totalBases = b1 + (bs.b2 * 2) + (bs.b3 * 3) + (bs.hr * 4);
+    const slg = bs.ab > 0 ? (totalBases / bs.ab) : 0;
+    const ops = obp + slg;
+
+    return `<tr>
+      <td>${bs.name}</td><td>${bs.pa}</td><td>${bs.ab}</td><td>${bs.h}</td>
+      <td>${bs.b2}</td><td>${bs.b3}</td><td>${bs.hr}</td><td>${bs.rbi}</td>
+      <td>${bs.bb}</td><td>${bs.so}</td><td>${bs.go}</td><td>${bs.fo}</td><td>${bs.fc}</td>
+      <td><strong>${avg.toFixed(3).replace(/^0/, '')}</strong></td>
+      <td>${obp.toFixed(3).replace(/^0/, '')}</td><td>${slg.toFixed(3).replace(/^0/, '')}</td>
+      <td><strong>${ops.toFixed(3)}</strong></td>
+    </tr>`;
+  }).join('');
+  batTbody.innerHTML = batRows || '<tr><td colspan="17" style="text-align:center; color:#9ca3af;">尚無打擊數據</td></tr>';
+
+  // 渲染守備表
+  const defTbody = document.querySelector('#' + prefix + 'defense-table tbody');
+  const defRows = Object.entries(defStats).filter(([id, ds]) => (ds.totalGames > 0 || ds.errors > 0) && (!playerFilter || id === playerFilter)).map(([, ds]) => ds).map(ds => {
+    const breakdown = Object.entries(ds.posCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([pos, count]) => `${pos} × ${count}場`)
+      .join('、') || '-';
+    return `<tr>
+      <td>${ds.name}</td>
+      <td><strong>${ds.totalGames}</strong></td>
+      <td>${ds.mainPos}</td>
+      <td style="text-align:left;">${breakdown}</td>
+      <td style="color:${ds.errors > 0 ? '#dc2626' : 'inherit'}; font-weight:bold;">${ds.errors}</td>
+    </tr>`;
+  }).join('');
+  defTbody.innerHTML = defRows || '<tr><td colspan="5" style="text-align:center; color:#9ca3af;">尚無守備出賽紀錄（請於比賽記分頁指派守備位置）</td></tr>';
+
+  // 渲染投手表
+  const pitchTbody = document.querySelector('#' + prefix + 'pitching-table tbody');
+  const pitchRows = Object.entries(pitchStats).filter(([id, ps]) => ps.g > 0 && (!playerFilter || id === playerFilter)).map(([, ps]) => ps).map(ps => {
+    const ipDisplay = Math.floor(ps.outs / 3) + '.' + (ps.outs % 3);
+    const trueIp = ps.outs / 3;
+    const era = trueIp > 0 ? ((ps.er * 7) / trueIp).toFixed(2) : '0.00';
+    return `<tr>
+      <td>${ps.name}</td><td>${ps.g}</td><td>${ipDisplay}</td>
+      <td>${ps.r}</td><td>${ps.er}</td><td>${ps.so}</td>
+      <td><strong>${era}</strong></td>
+    </tr>`;
+  }).join('');
+  pitchTbody.innerHTML = pitchRows || '<tr><td colspan="7" style="text-align:center; color:#9ca3af;">尚無投手數據</td></tr>';
+}
+
+function getResultName(code) {
+  const map = {
+    '1B': '一壘安打', '2B': '二壘安打', '3B': '三壘安打', 'HR': '全壘打',
+    'BB': '四壞保送', 'SF': '高飛犧牲打', 'FO': '飛球出局', 'GO': '滾地球封殺',
+    'FC': '野選上壘', 'OUT': '一般出局', 'SO': '三振', 'E': '失誤上壘'
+  };
+  return map[code] || code;
+}
+
+function saveTeamName() {
+  const name = document.getElementById('team-name-input').value.trim();
+  if (!name) return;
+  appData.teamName = name;
+  document.getElementById('app-title').innerText = '⚾ ' + name;
+  saveData();
+  alert('隊名已更新！');
+}
+
+function exportData() {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+  const dlAnchor = document.createElement('a');
+  dlAnchor.setAttribute("href", dataStr);
+  const dateStr = new Date().toISOString().slice(0,10);
+  dlAnchor.setAttribute("download", appData.teamName + '_數據備份_' + dateStr + '.json');
+  document.body.appendChild(dlAnchor);
+  dlAnchor.click();
+  dlAnchor.remove();
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (imported.players && imported.games) {
+        appData = imported;
+        saveData();
+        renderAll();
+        alert('備份資料匯入成功！');
+      } else {
+        alert('檔案格式不正確！');
+      }
+    } catch (err) {
+      alert('讀取檔案失敗！');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function resetAllData() {
+  if (!confirm('警告：這將會清除所有球員與比賽數據且無法復原！確定要清空嗎？')) return;
+  localStorage.removeItem('softball_club_data_v1');
+  location.reload();
+}
+</script>
+</body>
+</html>
